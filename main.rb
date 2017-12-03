@@ -14,7 +14,7 @@ end
 
 def buy_into(symbol)
   portfolio = Robinhood.new
-  cash_for_buy = (500 * 0.3).round(2)
+  cash_for_buy = (portfolio.cash * 0.3).round(2)
   last_price = portfolio.last_price_for(symbol)
 
   return if last_price > cash_for_buy
