@@ -8,14 +8,18 @@ require "./lib/robinhood"
 
 Money.use_i18n = false
 
+logger = Logger.new(STDOUT)
+logger.level = Logger::INFO
+
 kafka = Kafka.new(
+  logger: logger,
   seed_brokers: ["#{ENV["KAFKA_HOST"]}:#{ENV["KAFKA_PORT"]}"],
   client_id: "equity-trader"
 )
 
 consumer = kafka.consumer(group_id: "equity-trader")
 
-consumer.subscribe("equity-signals")
+consumer.subscribe("equity-signals", start_from_beginning: false)
 
 def format_money(amount)
   Money.new((amount.round(2) * 100).to_i, "USD").format
