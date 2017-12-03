@@ -53,31 +53,31 @@ consumer = kafka.consumer(group_id: "equity-trader")
 
 begin
   consumer.subscribe("equity-signals", start_from_beginning: false)
+
+  consumer.each_message do |message|
+    symbol = message.key.upcase
+    message = JSON.parse(message.value)
+    signal = message["signal"]
+    timestamp = message["at"]
+
+    portfolio = Robinhood.new
+
+    return if Time.parse(message["at"]) <= 1.day.ago
+
+    begin
+      case signal
+        when "buy"
+          buy_into(symbol)
+        when "sell"
+          sell_off(symbol)
+      end
+    rescue => e
+      e.message
+    end
+
+    $stdout.flush
+  end
 rescue => e
   sleep 5
   retry
-end
-
-consumer.each_message do |message|
-  symbol = message.key.upcase
-  message = JSON.parse(message.value)
-  signal = message["signal"]
-  timestamp = message["at"]
-
-  portfolio = Robinhood.new
-
-  return if Time.parse(message["at"]) <= 1.day.ago
-
-  begin
-    case signal
-      when "buy"
-        buy_into(symbol)
-      when "sell"
-        sell_off(symbol)
-    end
-  rescue => e
-    e.message
-  end
-
-  $stdout.flush
 end
