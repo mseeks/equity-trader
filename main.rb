@@ -78,6 +78,7 @@ begin
     $stdout.flush
   end
 rescue => e
+  e.message
   sleep 5
   retry
 end
