@@ -1,13 +1,13 @@
 source "https://rubygems.org"
 
-# Use activerecord as our database ORM
-gem "activerecord"
+# use activesupport to simplify time math
+gem "activesupport"
+
+# Use money to format currency in logs
+gem "money"
 
 # Use ruby-kafka as our client for Kafka
 gem "ruby-kafka"
-
-# Use pg as our database adapter
-gem "pg"
 
 # Use rest-client to make HTTP calls easier
 gem "rest-client"

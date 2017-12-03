@@ -1,71 +1,70 @@
-require "active_record"
+require "active_support/all"
 require "json"
 require "kafka"
-require "pg"
+require "money"
 require "rest-client"
 
-require "./lib/alpha_vantage"
+require "./lib/robinhood"
 
-db_config = {
-  host:     ENV["DB_HOST"],
-  adapter:  "postgresql",
-  encoding: "utf-8",
-  database: ENV["DB_NAME"],
-  username: ENV["DB_USERNAME"],
-  password: ENV["DB_PASSWORD"]
-}
-
-ActiveRecord::Base.establish_connection(db_config)
-ActiveRecord::Migrator.migrate("db/migrate/")
+Money.use_i18n = false
 
 kafka = Kafka.new(
   seed_brokers: ["#{ENV["KAFKA_HOST"]}:#{ENV["KAFKA_PORT"]}"],
-  client_id: "equity-signaler"
+  client_id: "equity-trader"
 )
 
-class Equity < ActiveRecord::Base
-  enum signal: {
-    sell: 0, # default
-    buy: 1
-  }
+consumer = kafka.consumer(group_id: "equity-trader")
 
-  # Decide if buy or sell and initiate signal update
-  def update_signal!
-    result = AlphaVantage.new(self.symbol)
+consumer.subscribe("equity-signals")
 
-    if result.macd > result.signal
-      self.signal!(:buy)
-    else
-      self.signal!(:sell)
-    end
-  end
-
-  # Updates the signal in the DB and send a message to Kafka if it changed
-  def signal!(type)
-    self.signal = type
-    self.send_message! if self.signal_changed? && self.save
-  end
-
-  # Send a message to Kafka about the signal change
-  def send_message!
-    message = {
-      signal: self.signal,
-      at: Time.now
-    }.to_json
-
-    puts "#{self.symbol} -> #{message}"
-    kafka.deliver_message(message, topic: "equity_signals", key: self.symbol)
-  end
+def format_money(amount)
+  Money.new((amount.round(2) * 100).to_i, "USD").format
 end
 
-potential_securities = ENV["POTENTIAL_SECURITIES"].split(",")
+def buy_into(symbol)
+  portfolio = Robinhood.new
+  cash_for_buy = (500 * 0.3).round(2)
+  last_price = portfolio.last_price_for(symbol)
 
-potential_securities.each do |potential_security|
+  return if last_price > cash_for_buy
+
+  quantity = (cash_for_buy / last_price).floor.round
+
+  puts "BUY #{quantity} x #{symbol} @ #{format_money(last_price)}"
+  portfolio.market_buy(symbol, position["instrument"], quantity)
+end
+
+def sell_off(symbol)
+  portfolio = Robinhood.new
+  instrument = portfolio.instrument_for_symbol(symbol)
+  instrument_id = instrument["id"]
+  position = portfolio.position_for_instrument(instrument_id)
+  last_price = portfolio.last_price_for(symbol)
+  quantity = position["quantity"].to_f.round
+
+  puts "SELL #{quantity} x #{symbol} @ #{format_money(last_price)}"
+  portfolio.market_sell(symbol, position["instrument"], quantity)
+end
+
+consumer.each_message do |message|
+  symbol = message.key.upcase
+  message = JSON.parse(message.value)
+  signal = message["signal"]
+  timestamp = message["at"]
+
+  portfolio = Robinhood.new
+
+  return if Time.parse(message["at"]) <= 1.day.ago
+
   begin
-    @equity = Equity.where(symbol: potential_security.upcase).first_or_create
-    @equity.update_signal!
+    case signal
+      when "buy"
+        buy_into(symbol)
+      when "sell"
+        sell_off(symbol)
+    end
   rescue => e
-    puts e.message
+    e.message
   end
 
   $stdout.flush
