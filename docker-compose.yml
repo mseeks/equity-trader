@@ -1,0 +1,13 @@
+version: '3'
+services:
+  signaler:
+    build: ./
+    env_file: .env
+  postgres:
+    image: postgres
+    env_file: .env
+  kafka:
+    image: spotify/kafka
+    environment:
+      - ADVERTISED_PORT=9092
+      - ADVERTISED_HOST=kafka
