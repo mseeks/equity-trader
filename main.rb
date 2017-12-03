@@ -33,8 +33,10 @@ def sell_off(symbol)
   last_price = portfolio.last_price_for(symbol)
   quantity = position["quantity"].to_f.round
 
-  puts "SELL #{quantity} x #{symbol} @ #{format_money(last_price)}"
-  portfolio.market_sell(symbol, position["instrument"], quantity)
+  if quantity > 0
+    puts "SELL #{quantity} x #{symbol} @ #{format_money(last_price)}"
+    portfolio.market_sell(symbol, position["instrument"], quantity)
+  end
 end
 
 logger = Logger.new(STDOUT)
