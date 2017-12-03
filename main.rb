@@ -8,20 +8,6 @@ require "./lib/robinhood"
 
 Money.use_i18n = false
 
-logger = Logger.new(STDOUT)
-logger.level = Logger::INFO
-
-kafka = Kafka.new(
-  connect_timeout: 30,
-  logger: logger,
-  seed_brokers: ["#{ENV["KAFKA_HOST"]}:#{ENV["KAFKA_PORT"]}"],
-  client_id: "equity-trader"
-)
-
-consumer = kafka.consumer(group_id: "equity-trader")
-
-consumer.subscribe("equity-signals", start_from_beginning: false)
-
 def format_money(amount)
   Money.new((amount.round(2) * 100).to_i, "USD").format
 end
@@ -49,6 +35,24 @@ def sell_off(symbol)
 
   puts "SELL #{quantity} x #{symbol} @ #{format_money(last_price)}"
   portfolio.market_sell(symbol, position["instrument"], quantity)
+end
+
+logger = Logger.new(STDOUT)
+logger.level = Logger::INFO
+
+kafka = Kafka.new(
+  connect_timeout: 30,
+  logger: logger,
+  seed_brokers: ["#{ENV["KAFKA_HOST"]}:#{ENV["KAFKA_PORT"]}"],
+  client_id: "equity-trader"
+)
+
+consumer = kafka.consumer(group_id: "equity-trader")
+
+begin
+  consumer.subscribe("equity-signals", start_from_beginning: false)
+rescue => e
+  retry
 end
 
 consumer.each_message do |message|
