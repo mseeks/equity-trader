@@ -54,6 +54,7 @@ consumer = kafka.consumer(group_id: "equity-trader")
 begin
   consumer.subscribe("equity-signals", start_from_beginning: false)
 rescue => e
+  sleep 5
   retry
 end
 
