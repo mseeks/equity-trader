@@ -43,7 +43,6 @@ logger = Logger.new(STDOUT)
 logger.level = Logger::INFO
 
 kafka = Kafka.new(
-  connect_timeout: 30,
   logger: logger,
   seed_brokers: ["#{ENV["KAFKA_HOST"]}:#{ENV["KAFKA_PORT"]}"],
   client_id: "equity-trader"
