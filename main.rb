@@ -61,17 +61,17 @@ begin
 
     portfolio = Robinhood.new
 
-    return if Time.parse(message["at"]) <= 1.day.ago
-
-    begin
-      case signal
-        when "buy"
-          buy_into(symbol)
-        when "sell"
-          sell_off(symbol)
+    unless Time.parse(message["at"]) <= 1.day.ago
+      begin
+        case signal
+          when "buy"
+            buy_into(symbol)
+          when "sell"
+            sell_off(symbol)
+        end
+      rescue => e
+        e.message
       end
-    rescue => e
-      e.message
     end
 
     $stdout.flush
