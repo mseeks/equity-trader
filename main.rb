@@ -40,7 +40,7 @@ def sell_off(symbol)
 end
 
 logger = Logger.new(STDOUT)
-logger.level = Logger::INFO
+logger.level = Logger::WARN
 
 kafka = Kafka.new(
   logger: logger,
