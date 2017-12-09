@@ -106,6 +106,7 @@ class Robinhood
       response = @api[path].get(@api_headers)
       JSON.parse(response.body)
     rescue => e
+      puts e.message
       puts e.response.body
     end
   end
@@ -115,6 +116,7 @@ class Robinhood
       response = @api[path].post(params, @api_headers)
       JSON.parse(response.body)
     rescue => e
+      puts e.message
       puts e.response.body
     end
   end
@@ -124,6 +126,7 @@ class Robinhood
       response = @api[path].get
       JSON.parse(response.body)
     rescue => e
+      puts e.message
       puts e.response.body
     end
   end
