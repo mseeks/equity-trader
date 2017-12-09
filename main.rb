@@ -24,7 +24,7 @@ def buy_into(symbol)
   owned_quantity = position["quantity"].to_f.round
   quantity = (cash_for_buy / last_price).floor.round
 
-  # Check to make sure we don't already have a stake in that equiy
+  # Check to make sure we don't already have a stake in that equity
   unless owned_quantity > 0
     puts "BUY #{quantity} x #{symbol} @ #{format_money(last_price)}"
     portfolio.market_buy(symbol, position["instrument"], quantity)
@@ -39,7 +39,7 @@ def sell_off(symbol)
   last_price = portfolio.last_price_for(symbol)
   quantity = position["quantity"].to_f.round
 
-  # Check to make sure we have a stake in that equiy
+  # Check to make sure we have a stake in that equity
   if quantity > 0
     puts "SELL #{quantity} x #{symbol} @ #{format_money(last_price)}"
     portfolio.market_sell(symbol, position["instrument"], quantity)
