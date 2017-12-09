@@ -77,7 +77,9 @@ begin
             sell_off(symbol)
         end
 
+        # Mark as processed and commit immediately to avoid collisions
         consumer.mark_message_as_processed(message)
+        consumer.commit_offsets
       rescue => e
         puts e.message
       end
