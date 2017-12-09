@@ -19,6 +19,8 @@ def buy_into(symbol)
 
   return if last_price > cash_for_buy
 
+  instrument = portfolio.instrument_for_symbol(symbol)
+  position = portfolio.position_for_instrument(instrument["id"])
   quantity = (cash_for_buy / last_price).floor.round
 
   puts "BUY #{quantity} x #{symbol} @ #{format_money(last_price)}"
