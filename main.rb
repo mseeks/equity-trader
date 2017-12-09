@@ -70,14 +70,14 @@ begin
             sell_off(symbol)
         end
       rescue => e
-        e.message
+        puts e.message
       end
     end
 
     $stdout.flush
   end
 rescue => e
-  e.message
+  puts e.message
   sleep 5
   retry
 end
