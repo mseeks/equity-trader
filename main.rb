@@ -21,10 +21,14 @@ def buy_into(symbol)
 
   instrument = portfolio.instrument_for_symbol(symbol)
   position = portfolio.position_for_instrument(instrument["id"])
+  owned_quantity = position["quantity"].to_f.round
   quantity = (cash_for_buy / last_price).floor.round
 
-  puts "BUY #{quantity} x #{symbol} @ #{format_money(last_price)}"
-  portfolio.market_buy(symbol, position["instrument"], quantity)
+  # Check to make sure we don't already have a stake in that equiy
+  unless owned_quantity > 0
+    puts "BUY #{quantity} x #{symbol} @ #{format_money(last_price)}"
+    portfolio.market_buy(symbol, position["instrument"], quantity)
+  end
 end
 
 def sell_off(symbol)
@@ -35,6 +39,7 @@ def sell_off(symbol)
   last_price = portfolio.last_price_for(symbol)
   quantity = position["quantity"].to_f.round
 
+  # Check to make sure we have a stake in that equiy
   if quantity > 0
     puts "SELL #{quantity} x #{symbol} @ #{format_money(last_price)}"
     portfolio.market_sell(symbol, position["instrument"], quantity)
@@ -55,7 +60,7 @@ consumer = kafka.consumer(group_id: "equity-trader")
 begin
   consumer.subscribe("equity-signals", start_from_beginning: false)
 
-  consumer.each_message do |message|
+  consumer.each_message(automatically_mark_as_processed: false) do |message|
     symbol = message.key.upcase
     message = JSON.parse(message.value)
     signal = message["signal"]
@@ -71,6 +76,8 @@ begin
           when "sell"
             sell_off(symbol)
         end
+
+        consumer.mark_message_as_processed(message)
       rescue => e
         puts e.message
       end
