@@ -62,13 +62,13 @@ begin
 
   consumer.each_message(automatically_mark_as_processed: false) do |message|
     symbol = message.key.upcase
-    message = JSON.parse(message.value)
-    signal = message["signal"]
-    timestamp = message["at"]
+    message_hash = JSON.parse(message.value)
+    signal = message_hash["signal"]
+    timestamp = message_hash["at"]
 
     portfolio = Robinhood.new
 
-    unless Time.parse(message["at"]) <= 1.day.ago
+    unless Time.parse(timestamp) <= 1.day.ago
       begin
         case signal
           when "buy"
