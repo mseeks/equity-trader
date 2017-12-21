@@ -4,7 +4,10 @@ services:
     build: ./
     env_file: .env
   kafka:
-    image: spotify/kafka
+    image: ches/kafka
     environment:
-      - ADVERTISED_PORT=9092
-      - ADVERTISED_HOST=kafka
+      - ZOOKEEPER_IP=zookeeper
+    depends_on:
+      - zookeeper
+  zookeeper:
+    image: zookeeper:3.4

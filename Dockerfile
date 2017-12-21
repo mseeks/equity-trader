@@ -1,16 +1,12 @@
-FROM ruby
-MAINTAINER Matthew Sullivan <matthew@msull92.com>
+FROM golang:1.8 as builder
+WORKDIR /go/src/github.com/msull92/equity-trader
+RUN go get -d -v golang.org/x/net/html
+COPY main.go .
+RUN go get ./...
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-# Install gems
-ENV APP_HOME /app
-ENV HOME /root
-RUN mkdir $APP_HOME
-WORKDIR $APP_HOME
-COPY Gemfile* $APP_HOME/
-RUN bundle install
-
-# Upload source
-COPY . $APP_HOME
-
-# Start server
-CMD ["bundle", "exec", "ruby", "main.rb"]
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /go/src/github.com/msull92/equity-trader/main .
+CMD ["./main"]
