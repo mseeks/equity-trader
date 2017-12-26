@@ -308,7 +308,7 @@ func main() {
 			symbol := string(message.Key)
 			signal := signalMessage{}
 
-			fmt.Println(symbol, "->", string(message.Value))
+			fmt.Println("Received:", symbol, "->", string(message.Value))
 
 			err := json.Unmarshal(message.Value, &signal)
 			if err != nil {
