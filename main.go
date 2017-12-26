@@ -113,7 +113,7 @@ func positionMetaInformation(accountNumber string, instrumentID string) (decimal
 		return decimal.Decimal{}, "", err
 	}
 
-	instrumentUrl, err := value.GetString("instrument")
+	instrumentURL, err := value.GetString("instrument")
 	if err != nil {
 		return decimal.Decimal{}, "", err
 	}
@@ -128,7 +128,7 @@ func positionMetaInformation(accountNumber string, instrumentID string) (decimal
 		return decimal.Decimal{}, "", err
 	}
 
-	return ownedQuantityAsDecimal, instrumentUrl, nil
+	return ownedQuantityAsDecimal, instrumentURL, nil
 }
 
 func lastTradePriceForSymbol(symbol string) (decimal.Decimal, error) {
@@ -185,7 +185,7 @@ func buyInto(symbol string) error {
 		return err
 	}
 
-	ownedQuantity, instrumentUrl, err := positionMetaInformation(accountNumber, instrumentID)
+	ownedQuantity, instrumentURL, err := positionMetaInformation(accountNumber, instrumentID)
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func buyInto(symbol string) error {
 	resp, err := resty.R().
 		SetBody(map[string]interface{}{
 			"account":       fmt.Sprint("https://api.robinhood.com/accounts/", accountNumber, "/"),
-			"instrument":    instrumentUrl,
+			"instrument":    instrumentURL,
 			"symbol":        symbol,
 			"type":          "market",
 			"trigger":       "immediate",
@@ -239,7 +239,7 @@ func sellOff(symbol string) error {
 		return err
 	}
 
-	ownedQuantity, instrumentUrl, err := positionMetaInformation(accountNumber, instrumentID)
+	ownedQuantity, instrumentURL, err := positionMetaInformation(accountNumber, instrumentID)
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,7 @@ func sellOff(symbol string) error {
 	resp, err := resty.R().
 		SetBody(map[string]interface{}{
 			"account":       fmt.Sprint("https://api.robinhood.com/accounts/", accountNumber, "/"),
-			"instrument":    instrumentUrl,
+			"instrument":    instrumentURL,
 			"symbol":        symbol,
 			"type":          "market",
 			"trigger":       "immediate",
