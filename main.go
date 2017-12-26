@@ -281,7 +281,7 @@ func main() {
 
 	broker := os.Getenv("KAFKA_ENDPOINT")
 	topic := os.Getenv("KAFKA_TOPIC")
-	partition, err := strconv.Atoi(os.Getenv("KAFKA_PARITION"))
+	partition, err := strconv.Atoi(os.Getenv("KAFKA_PARTITION"))
 	if err != nil {
 		panic(err)
 	}
