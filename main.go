@@ -302,42 +302,42 @@ func main() {
 		message, err := kafkaClientReader.ReadMessage(context.Background())
 		if err != nil {
 			fmt.Println(err)
+			continue
 		}
 
-		if message.Value != nil {
-			symbol := string(message.Key)
-			signal := signalMessage{}
+		symbol := string(message.Key)
+		signal := signalMessage{}
 
-			fmt.Println("Received:", symbol, "->", string(message.Value))
+		fmt.Println("Received:", symbol, "->", string(message.Value))
 
-			err := json.Unmarshal(message.Value, &signal)
+		err = json.Unmarshal(message.Value, &signal)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		signaledAt, err := time.Parse("2006-01-02 15:04:05 -0700", signal.At)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		yesterday := time.Now().UTC().Add(-24 * time.Hour).Unix()
+
+		if signaledAt.Unix() < yesterday {
+			fmt.Println("Signal has expired, ignoring.")
+			continue
+		}
+
+		if strings.ToLower(signal.Value) == "buy" {
+			err := buyInto(symbol)
 			if err != nil {
 				fmt.Println(err)
-				return
 			}
-
-			signaledAt, err := time.Parse("2006-01-02 15:04:05 -0700", signal.At)
+		} else if strings.ToLower(signal.Value) == "sell" {
+			err := sellOff(symbol)
 			if err != nil {
 				fmt.Println(err)
-				return
-			}
-
-			yesterday := time.Now().UTC().Add(-24 * time.Hour).Unix()
-
-			if signaledAt.Unix() > yesterday {
-				if strings.ToLower(signal.Value) == "buy" {
-					err := buyInto(symbol)
-					if err != nil {
-						fmt.Println(err)
-					}
-				} else if strings.ToLower(signal.Value) == "sell" {
-					err := sellOff(symbol)
-					if err != nil {
-						fmt.Println(err)
-					}
-				}
-			} else {
-				fmt.Println("Signal has expired, ignoring.")
 			}
 		}
 	}
