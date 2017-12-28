@@ -302,7 +302,7 @@ func main() {
 		message, err := kafkaClientReader.ReadMessage(context.Background())
 		if err != nil {
 			fmt.Println(err)
-			break
+			continue
 		}
 
 		symbol := string(message.Key)
