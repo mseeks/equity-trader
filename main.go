@@ -1,16 +1,14 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Shopify/sarama"
 	"github.com/antonholmquist/jason"
-	"github.com/segmentio/kafka-go"
 	"github.com/shopspring/decimal"
 	"gopkg.in/resty.v1"
 )
@@ -280,64 +278,61 @@ func main() {
 	resty.SetRedirectPolicy(resty.FlexibleRedirectPolicy(10))
 
 	broker := os.Getenv("KAFKA_ENDPOINT")
-	topic := os.Getenv("KAFKA_TOPIC")
-	partition, err := strconv.Atoi(os.Getenv("KAFKA_PARTITION"))
-	if err != nil {
-		panic(err)
-	}
-
-	kafkaClientReader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   []string{broker},
-		Topic:     topic,
-		Partition: partition,
-	})
-	defer kafkaClientReader.Close()
-
-	err = kafkaClientReader.SetOffset(-2) // -2 is how you say you want the last offset
-	if err != nil {
-		panic(err)
-	}
+	topic := os.Getenv("KAFKA_CONSUMER_TOPIC")
 
 	for {
-		message, err := kafkaClientReader.ReadMessage(context.Background())
+		consumer, err := sarama.NewConsumer([]string{broker}, nil)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
+		defer consumer.Close()
 
-		symbol := string(message.Key)
-		signal := signalMessage{}
-
-		fmt.Println("Received:", symbol, "->", string(message.Value))
-
-		err = json.Unmarshal(message.Value, &signal)
+		partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
+		defer partitionConsumer.Close()
 
-		signaledAt, err := time.Parse("2006-01-02 15:04:05 -0700", signal.At)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+		for {
+			select {
+			case message := <-partitionConsumer.Messages():
+				symbol := string(message.Key)
+				signal := signalMessage{}
 
-		yesterday := time.Now().UTC().Add(-24 * time.Hour).Unix()
+				fmt.Println("Received:", symbol, "->", string(message.Value))
 
-		if signaledAt.Unix() < yesterday {
-			fmt.Println("Signal has expired, ignoring.")
-			continue
-		}
+				err = json.Unmarshal(message.Value, &signal)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
 
-		if strings.ToLower(signal.Value) == "buy" {
-			err := buyInto(symbol)
-			if err != nil {
-				fmt.Println(err)
-			}
-		} else if strings.ToLower(signal.Value) == "sell" {
-			err := sellOff(symbol)
-			if err != nil {
-				fmt.Println(err)
+				signaledAt, err := time.Parse("2006-01-02 15:04:05 -0700", signal.At)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+				yesterday := time.Now().UTC().Add(-24 * time.Hour).Unix()
+
+				if signaledAt.Unix() < yesterday {
+					fmt.Println("Signal has expired, ignoring.")
+					continue
+				}
+
+				if strings.ToLower(signal.Value) == "buy" {
+					err := buyInto(symbol)
+					if err != nil {
+						fmt.Println(err)
+					}
+				} else if strings.ToLower(signal.Value) == "sell" {
+					err := sellOff(symbol)
+					if err != nil {
+						fmt.Println(err)
+					}
+				}
 			}
 		}
 	}
