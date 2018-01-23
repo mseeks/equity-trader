@@ -47,7 +47,12 @@ func accountMetaInformation() (string, decimal.Decimal, error) {
 		return "", decimal.Decimal{}, err
 	}
 
-	buyingPower, err := results[0].GetString("buying_power")
+	marginBalances, err := results[0].GetObject("margin_balances")
+	if err != nil {
+		return "", decimal.Decimal{}, err
+	}
+
+	buyingPower, err := marginBalances.GetString("buying_power")
 	if err != nil {
 		return "", decimal.Decimal{}, err
 	}
