@@ -52,7 +52,7 @@ func accountMetaInformation() (string, decimal.Decimal, error) {
 		return "", decimal.Decimal{}, err
 	}
 
-	buyingPower, err := marginBalances.GetString("buying_power")
+	buyingPower, err := marginBalances.GetString("unallocated_margin_cash")
 	if err != nil {
 		return "", decimal.Decimal{}, err
 	}
