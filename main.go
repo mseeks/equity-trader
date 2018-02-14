@@ -29,7 +29,7 @@ func accountMetaInformation() (string, decimal.Decimal, error) {
 	}
 
 	if resp.StatusCode() != 200 {
-		return "", decimal.Decimal{}, fmt.Errorf("Incorrect status code: %v", resp.Status())
+		return "", decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 32: %v", resp.Status())
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -77,7 +77,7 @@ func instrumentIDFromSymbol(symbol string) (string, error) {
 	}
 
 	if resp.StatusCode() != 200 {
-		return "", fmt.Errorf("Incorrect status code: %v", resp.Status())
+		return "", fmt.Errorf("Incorrect status code at line 80: %v", resp.Status())
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -108,7 +108,7 @@ func positionMetaInformation(accountNumber string, instrumentID string) (decimal
 	}
 
 	if resp.StatusCode() != 200 {
-		return decimal.Decimal{}, "", fmt.Errorf("Incorrect status code: %v", resp.Status())
+		return decimal.Decimal{}, "", fmt.Errorf("Incorrect status code at line 111: %v", resp.Status())
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -145,7 +145,7 @@ func lastTradePriceForSymbol(symbol string) (decimal.Decimal, error) {
 	}
 
 	if resp.StatusCode() != 200 {
-		return decimal.Decimal{}, fmt.Errorf("Incorrect status code: %v", resp.Status())
+		return decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 148: %v", resp.Status())
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -220,7 +220,7 @@ func buyInto(symbol string) error {
 	}
 
 	if resp.StatusCode() != 201 {
-		return fmt.Errorf("Incorrect status code: %v", resp.Status())
+		return fmt.Errorf("Incorrect status code at line 223: %v", resp.Status())
 	}
 
 	return nil
@@ -273,7 +273,7 @@ func sellOff(symbol string) error {
 	}
 
 	if resp.StatusCode() != 201 {
-		return fmt.Errorf("Incorrect status code: %v", resp.Status())
+		return fmt.Errorf("Incorrect status code at line 276: %v", resp.Status())
 	}
 
 	return nil
