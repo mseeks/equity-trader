@@ -107,7 +107,9 @@ func positionMetaInformation(accountNumber string, instrumentID string) (decimal
 		return decimal.Decimal{}, "", err
 	}
 
-	if resp.StatusCode() != 200 {
+	if resp.StatusCode() == 404 {
+		return decimal.NewFromFloat(0.0), "", nil
+	} else if resp.StatusCode() != 200 {
 		return decimal.Decimal{}, "", fmt.Errorf("Incorrect status code at line 111: %v", resp.Status())
 	}
 
