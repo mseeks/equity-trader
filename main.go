@@ -29,7 +29,7 @@ func accountMetaInformation() (string, decimal.Decimal, error) {
 	}
 
 	if resp.StatusCode() != 200 {
-		return "", decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 32: %v", resp.Status())
+		return "", decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 32: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -77,7 +77,7 @@ func instrumentIDFromSymbol(symbol string) (string, error) {
 	}
 
 	if resp.StatusCode() != 200 {
-		return "", fmt.Errorf("Incorrect status code at line 80: %v", resp.Status())
+		return "", fmt.Errorf("Incorrect status code at line 80: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -110,7 +110,7 @@ func positionMetaInformation(accountNumber string, instrumentID string) (decimal
 	if resp.StatusCode() == 404 {
 		return decimal.NewFromFloat(0.0), "", nil
 	} else if resp.StatusCode() != 200 {
-		return decimal.Decimal{}, "", fmt.Errorf("Incorrect status code at line 111: %v", resp.Status())
+		return decimal.Decimal{}, "", fmt.Errorf("Incorrect status code at line 113: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -147,7 +147,7 @@ func lastTradePriceForSymbol(symbol string) (decimal.Decimal, error) {
 	}
 
 	if resp.StatusCode() != 200 {
-		return decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 148: %v", resp.Status())
+		return decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 150: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
@@ -222,7 +222,7 @@ func buyInto(symbol string) error {
 	}
 
 	if resp.StatusCode() != 201 {
-		return fmt.Errorf("Incorrect status code at line 223: %v", resp.Status())
+		return fmt.Errorf("Incorrect status code at line 225: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	return nil
@@ -275,7 +275,7 @@ func sellOff(symbol string) error {
 	}
 
 	if resp.StatusCode() != 201 {
-		return fmt.Errorf("Incorrect status code at line 276: %v", resp.Status())
+		return fmt.Errorf("Incorrect status code at line 278: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	return nil
