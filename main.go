@@ -65,7 +65,7 @@ func accountMetaInformation() (string, decimal.Decimal, error) {
 	return accountNumber, buyingPowerAsDecimal, nil
 }
 
-func instrumentIDFromSymbol(symbol string) (string, error) {
+func instrumentFromSymbol(symbol string) (string, string, error) {
 	resp, err := resty.R().
 		SetQueryParams(map[string]string{
 			"symbol": symbol,
@@ -73,67 +73,67 @@ func instrumentIDFromSymbol(symbol string) (string, error) {
 		SetHeader("Accept", "application/json").
 		Get("https://api.robinhood.com/instruments/")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if resp.StatusCode() != 200 {
-		return "", fmt.Errorf("Incorrect status code at line 80: %v, %v", resp.Status(), string(resp.Body()))
+		return "", "", fmt.Errorf("Incorrect status code at line 80: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	results, err := value.GetObjectArray("results")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	instrumentID, err := results[0].GetString("id")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return instrumentID, nil
+	instrumentURL, err := results[0].GetString("url")
+	if err != nil {
+		return "", "", err
+	}
+
+	return instrumentID, instrumentURL, nil
 }
 
-func positionMetaInformation(accountNumber string, instrumentID string) (decimal.Decimal, string, error) {
+func positionMetaInformation(accountNumber string, instrumentID string) (decimal.Decimal, error) {
 	resp, err := resty.R().
 		SetHeader("Accept", "application/json").
 		SetHeader("Authorization", fmt.Sprint("Token ", os.Getenv("ROBINHOOD_TOKEN"))).
 		Get(fmt.Sprint("https://api.robinhood.com/positions/", accountNumber, "/", instrumentID, "/"))
 	if err != nil {
-		return decimal.Decimal{}, "", err
+		return decimal.Decimal{}, err
 	}
 
 	if resp.StatusCode() == 404 {
-		return decimal.NewFromFloat(0.0), "", nil
+		return decimal.NewFromFloat(0.0), nil
 	} else if resp.StatusCode() != 200 {
-		return decimal.Decimal{}, "", fmt.Errorf("Incorrect status code at line 113: %v, %v", resp.Status(), string(resp.Body()))
+		return decimal.Decimal{}, fmt.Errorf("Incorrect status code at line 113: %v, %v", resp.Status(), string(resp.Body()))
 	}
 
 	value, err := jason.NewObjectFromBytes(resp.Body())
 	if err != nil {
-		return decimal.Decimal{}, "", err
-	}
-
-	instrumentURL, err := value.GetString("instrument")
-	if err != nil {
-		return decimal.Decimal{}, "", err
+		return decimal.Decimal{}, err
 	}
 
 	ownedQuantity, err := value.GetString("quantity")
 	if err != nil {
-		return decimal.Decimal{}, "", err
+		return decimal.Decimal{}, err
 	}
 
 	ownedQuantityAsDecimal, err := decimal.NewFromString(ownedQuantity)
 	if err != nil {
-		return decimal.Decimal{}, "", err
+		return decimal.Decimal{}, err
 	}
 
-	return ownedQuantityAsDecimal, instrumentURL, nil
+	return ownedQuantityAsDecimal, nil
 }
 
 func lastTradePriceForSymbol(symbol string) (decimal.Decimal, error) {
@@ -185,12 +185,12 @@ func buyInto(symbol string) error {
 		return fmt.Errorf("Skipping order, not enough buying power")
 	}
 
-	instrumentID, err := instrumentIDFromSymbol(symbol)
+	instrumentID, instrumentURL, err := instrumentFromSymbol(symbol)
 	if err != nil {
 		return err
 	}
 
-	ownedQuantity, instrumentURL, err := positionMetaInformation(accountNumber, instrumentID)
+	ownedQuantity, err := positionMetaInformation(accountNumber, instrumentID)
 	if err != nil {
 		return err
 	}
@@ -239,12 +239,12 @@ func sellOff(symbol string) error {
 		return err
 	}
 
-	instrumentID, err := instrumentIDFromSymbol(symbol)
+	instrumentID, instrumentURL, err := instrumentFromSymbol(symbol)
 	if err != nil {
 		return err
 	}
 
-	ownedQuantity, instrumentURL, err := positionMetaInformation(accountNumber, instrumentID)
+	ownedQuantity, err := positionMetaInformation(accountNumber, instrumentID)
 	if err != nil {
 		return err
 	}
