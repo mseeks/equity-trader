@@ -174,7 +174,7 @@ func buyInto(symbol string) error {
 		return err
 	}
 
-	cashForBuy := buyingPower.Mul(decimal.NewFromFloat(0.3)).Round(2)
+	cashForBuy := buyingPower.Mul(decimal.NewFromFloat(0.1)).Round(2)
 
 	lastTradePrice, err := lastTradePriceForSymbol(symbol)
 	if err != nil {
